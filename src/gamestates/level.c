@@ -128,6 +128,10 @@ void Gamestate_Draw(struct Game *game, struct LevelResources* data) {
 
 	al_draw_bitmap(data->buildings,0, 0,0);
 
+	if (data->tickling && data->haskid) {
+		al_draw_filled_rectangle(0, 160, (data->tickledKid->fun / 300.0) * 320, 180, al_map_rgb(255,255,255));
+	}
+
 	if (data->soloflash) {
 		al_draw_filled_rectangle(0, 0, 320, 180, al_map_rgb(255,255,255));
 	}
@@ -208,11 +212,17 @@ void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
 					data->tickledKid = tmp;
 					SetCharacterPosition(game, tmp->character, data->monster->x + 19, tmp->character->y - 1, 0);
 					al_set_sample_instance_playing(data->laughter, true);
+					break;
 				}
 				tmp=tmp->next;
 			}
 		}
+
+		if (data->haskid) {
+			data->tickledKid->fun++;
+		}
 	}
+
 
 	if (data->keys.lastkey == data->keys.key) {
 		data->keys.delay = data->keys.lastdelay; // workaround for random bugus UP/DOWN events
