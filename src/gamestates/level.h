@@ -47,6 +47,8 @@ struct LevelResources {
 				bool tickled;
 				bool grownup;
 				int fun;
+				bool happy;
+				bool right;
 		} *kids[6], *destroyQueue, *tickledKid;
 
 		int timeTillNextBadguy, kidRate;

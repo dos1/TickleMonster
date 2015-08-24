@@ -43,11 +43,32 @@ void MoveBadguys(struct Game *game, struct LevelResources *data, int i, float dx
 	struct Kid *tmp = data->kids[i];
 	while (tmp) {
 
-		if ((!tmp->character->spritesheet->kill) && (!tmp->tickled)) {
-			MoveCharacter(game, tmp->character, dx * tmp->speed * data->kidSpeed, 0, 0);
+		if (!tmp->grownup) {
+			if ((!tmp->character->spritesheet->kill) && (!tmp->tickled)) {
+				MoveCharacter(game, tmp->character, dx * tmp->speed * data->kidSpeed, 0, 0);
+			}
+
+			if (tmp->character->x < 20) {
+				if (tmp->fun > 225 && tmp->fun < 270) {
+					tmp->happy = true;
+				} else {
+					tmp->grownup = true;
+					tmp->right = true;
+					tmp->character->spritesheets = data->suit->spritesheets;
+					SelectSpritesheet(game, tmp->character, "stand");
+					MoveCharacter(game, tmp->character, 10, -8, 0);
+				}
+			}
+		} else {
+			MoveCharacter(game, tmp->character, (tmp->right ? -1 : 1) * dx * tmp->speed * data->kidSpeed / 2, 0, 0);
+			if (tmp->character->x > 270) {
+				tmp->right = false;
+			} else if (tmp->character->x < 42) {
+				tmp->right = true;
+			}
 		}
 
-		if (tmp->character->dead) {
+		if (tmp->happy) {
 			if (tmp->prev) {
 				tmp->prev->next = tmp->next;
 				if (tmp->next) tmp->next->prev = tmp->prev;
@@ -100,8 +121,8 @@ void CheckForEnd(struct Game *game, struct LevelResources *data) {
 void DrawBadguys(struct Game *game, struct LevelResources *data, int i) {
 	struct Kid *tmp = data->kids[i];
 	while (tmp) {
-		if (tmp->character->x > 20) {
-			DrawCharacter(game, tmp->character, al_map_rgb(255,255,255), 0);
+		if (!tmp->happy) {
+			DrawCharacter(game, tmp->character, al_map_rgb(255,255,255), (tmp->grownup && !tmp->right) ? ALLEGRO_FLIP_HORIZONTAL : 0);
 		}
 		tmp=tmp->next;
 	}
@@ -144,6 +165,7 @@ void AddBadguy(struct Game *game, struct LevelResources* data, int i) {
 	n->speed = (rand() % 3) * 0.25 + 1;
 	n->tickled = false;
 	n->grownup = false;
+	n->happy = false;
 	n->fun = 0;
 	n->character = CreateCharacter(game, "kid");
 	n->character->spritesheets = data->kid->spritesheets;
