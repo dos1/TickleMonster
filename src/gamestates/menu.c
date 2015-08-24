@@ -206,13 +206,13 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	data->title = al_load_bitmap( GetDataFilePath(game, "title.png") );
 	(*progress)(game);
 
-	//data->sample = al_load_sample( GetDataFilePath(game, "menu.flac") );
+	data->sample = al_load_sample( GetDataFilePath(game, "monster.flac") );
 	data->click_sample = al_load_sample( GetDataFilePath(game, "click.flac") );
 	(*progress)(game);
 
-	//data->music = al_create_sample_instance(data->sample);
-	//al_attach_sample_instance_to_mixer(data->music, game->audio.music);
-	//al_set_sample_instance_playmode(data->music, ALLEGRO_PLAYMODE_LOOP);
+	data->music = al_create_sample_instance(data->sample);
+	al_attach_sample_instance_to_mixer(data->music, game->audio.music);
+	al_set_sample_instance_playmode(data->music, ALLEGRO_PLAYMODE_LOOP);
 
 	data->click = al_create_sample_instance(data->click_sample);
 	al_attach_sample_instance_to_mixer(data->click, game->audio.fx);
@@ -236,6 +236,7 @@ void Gamestate_Stop(struct Game *game, struct MenuResources* data) {
 }
 
 void Gamestate_Unload(struct Game *game, struct MenuResources* data) {
+	al_stop_sample_instance(data->music);
 	al_destroy_bitmap(data->bg);
 	al_destroy_bitmap(data->title);
 	al_destroy_bitmap(data->monster);
@@ -262,7 +263,7 @@ void Gamestate_Start(struct Game *game, struct MenuResources* data) {
 	data->starting = false;
 
 	ChangeMenuState(game,data,MENUSTATE_HIDDEN);
-	//al_play_sample_instance(data->music);
+	al_play_sample_instance(data->music);
 
 }
 

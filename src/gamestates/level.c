@@ -295,6 +295,14 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	(*progress)(game);
 
 
+	data->sample = al_load_sample( GetDataFilePath(game, "laughter.flac") );
+	(*progress)(game);
+
+	data->laughter = al_create_sample_instance(data->sample);
+	al_attach_sample_instance_to_mixer(data->laughter, game->audio.fx);
+	al_set_sample_instance_playmode(data->laughter, ALLEGRO_PLAYMODE_LOOP);
+	(*progress)(game);
+
 	data->font_title = al_load_ttf_font(GetDataFilePath(game, "fonts/MonkeyIsland.ttf"),game->viewport.height*0.16,0 );
 	data->font = al_load_ttf_font(GetDataFilePath(game, "fonts/MonkeyIsland.ttf"),game->viewport.height*0.05,0 );
 	(*progress)(game);
@@ -351,9 +359,9 @@ void Gamestate_Unload(struct Game *game, struct LevelResources* data) {
 	al_destroy_bitmap(data->buildings);
 	al_destroy_font(data->font_title);
 	al_destroy_font(data->font);
-	//al_destroy_sample_instance(data->music);
+	al_destroy_sample_instance(data->laughter);
 	al_destroy_sample_instance(data->click);
-	//al_destroy_sample(data->sample);
+	al_destroy_sample(data->sample);
 	al_destroy_sample(data->click_sample);
 	DestroyCharacter(game, data->monster);
 	DestroyCharacter(game, data->suit);

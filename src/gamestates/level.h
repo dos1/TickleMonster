@@ -56,7 +56,7 @@ struct LevelResources {
 		float cloud_position; /*!< Position of bigger cloud. */
 		ALLEGRO_SAMPLE *sample; /*!< Music sample. */
 		ALLEGRO_SAMPLE *click_sample; /*!< Click sound sample. */
-		ALLEGRO_SAMPLE_INSTANCE *music; /*!< Sample instance with music sound. */
+		ALLEGRO_SAMPLE_INSTANCE *laughter; /*!< Sample instance with music sound. */
 		ALLEGRO_SAMPLE_INSTANCE *click; /*!< Sample instance with click sound. */
 		ALLEGRO_FONT *font_title; /*!< Font of "Super Derpy" text. */
 		ALLEGRO_FONT *font; /*!< Font of standard menu item. */
