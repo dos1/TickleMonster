@@ -23,41 +23,53 @@
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_audio.h>
 
-/*! \brief Enum of menu states in Menu and Pause game states. */
-enum menustate_enum {
-	MENUSTATE_HIDDEN,
-	MENUSTATE_MAIN,
-	MENUSTATE_OPTIONS,
-	MENUSTATE_VIDEO,
-	MENUSTATE_AUDIO,
-	MENUSTATE_ABOUT
-};
-
 /*! \brief Resources used by Menu state. */
-struct MenuResources {
-		ALLEGRO_BITMAP *bg;
-		ALLEGRO_BITMAP *monster; /*!< Bitmap with bigger cloud. */
-		ALLEGRO_BITMAP *title;
+struct LevelResources {
+		ALLEGRO_BITMAP *bg; /*!< Bitmap with lower portion of menu landscape. */
+		ALLEGRO_BITMAP *buildings;
 
-		double title_pos;
-		int screen_pos;
-		bool invisible;
-		int monster_pos;
-		bool starting;
+		float kidSpeed;
 
+		int markx, marky;
+
+		int usage;
+		int lightx, lighty, lightanim;
+
+		int soloready, soloanim, soloflash;
+		bool soloactive;
+
+		bool tickling, moveup, movedown;
+
+		struct Kid {
+				struct Character *character;
+				struct Kid *next, *prev;
+				float speed;
+				bool melting;
+		} *kids[6], *destroyQueue;
+
+		int timeTillNextBadguy, kidRate;
+
+		struct Character *monster;
+		struct Character *suit;
+		struct Character *kid;
+		struct Timeline *timeline;
+		float cloud_position; /*!< Position of bigger cloud. */
 		ALLEGRO_SAMPLE *sample; /*!< Music sample. */
 		ALLEGRO_SAMPLE *click_sample; /*!< Click sound sample. */
 		ALLEGRO_SAMPLE_INSTANCE *music; /*!< Sample instance with music sound. */
 		ALLEGRO_SAMPLE_INSTANCE *click; /*!< Sample instance with click sound. */
+		ALLEGRO_FONT *font_title; /*!< Font of "Super Derpy" text. */
 		ALLEGRO_FONT *font; /*!< Font of standard menu item. */
 		int selected; /*!< Number of selected menu item. */
-		enum menustate_enum menustate; /*!< Current menu page. */
-		struct {
-				bool fullscreen;
-				int fps;
-				int width;
-				int height;
-				int resolution;
-		} options; /*!< Options which can be changed in menu. */
 
+		struct {
+				int key;
+				bool shift;
+				int delay;
+				// workaround for random bogus UP/DOWN events
+				int lastkey;
+				int lastdelay;
+		} keys;
+
+		int score;
 };

@@ -146,7 +146,7 @@ void Gamestate_Draw(struct Game *game, struct MenuResources* data) {
 	al_draw_bitmap(data->bg, 0, 0, 0);
 	al_draw_bitmap(data->monster, data->monster_pos, 10, 0);
 	if (!data->starting) {
-		al_draw_bitmap(data->title, 123, 17 - (sin(data->title_pos) * 8) - data->screen_pos, 0);
+		al_draw_bitmap(data->title, 123, 25 - (pow(sin(data->title_pos), 2) * 16) - data->screen_pos, 0);
 	}
 
 	DrawMenuState(game, data);
@@ -155,14 +155,7 @@ void Gamestate_Draw(struct Game *game, struct MenuResources* data) {
 
 void Gamestate_Logic(struct Game *game, struct MenuResources* data) {
 
-	if (data->keys.lastkey == data->keys.key) {
-		data->keys.delay = data->keys.lastdelay; // workaround for random bugus UP/DOWN events
-	}
-
-	data->keys.lastkey = data->keys.key;
-	data->keys.lastdelay = data->keys.delay;
-
-	data->title_pos += 0.025;
+	data->title_pos += 0.05;
 
 	if (data->starting) {
 		data->monster_pos -= 6;
@@ -170,6 +163,8 @@ void Gamestate_Logic(struct Game *game, struct MenuResources* data) {
 		if (data->monster_pos < -202) {
 			data->starting = false;
 			LoadGamestate(game, "level");
+			StartGamestate(game, "level");
+			StopGamestate(game, "menu");
 		}
 
 	} else {
@@ -204,6 +199,7 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	data->options.height = game->config.height;
 	data->options.resolution = game->config.width / 320;
 	if (game->config.height / 180 < data->options.resolution) data->options.resolution = game->config.height / 180;
+	(*progress)(game);
 
 	data->bg = al_load_bitmap( GetDataFilePath(game, "bg.png") );
 	data->monster = al_load_bitmap( GetDataFilePath(game, "monster.png") );
@@ -229,7 +225,6 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	(*progress)(game);
 
 	data->font = al_load_ttf_font(GetDataFilePath(game, "fonts/MonkeyIsland.ttf"),game->viewport.height*0.05,0 );
-	(*progress)(game);
 
 	al_set_target_backbuffer(game->display);
 	return data;
@@ -266,11 +261,6 @@ void Gamestate_Start(struct Game *game, struct MenuResources* data) {
 	data->monster_pos = -202;
 	data->starting = false;
 
-	data->keys.key = 0;
-	data->keys.delay = 0;
-	data->keys.shift = false;
-	data->keys.lastkey = -1;
-
 	ChangeMenuState(game,data,MENUSTATE_HIDDEN);
 	//al_play_sample_instance(data->music);
 
@@ -284,6 +274,8 @@ void Gamestate_ProcessEvent(struct Game *game, struct MenuResources* data, ALLEG
 	}
 
 	if (ev->type != ALLEGRO_EVENT_KEY_DOWN) return;
+
+	if (data->starting) return;
 
 	if (ev->keyboard.keycode==ALLEGRO_KEY_UP) {
 		data->selected--;
@@ -452,6 +444,7 @@ void Gamestate_ProcessEvent(struct Game *game, struct MenuResources* data, ALLEG
 			default:
 				ChangeMenuState(game,data,MENUSTATE_HIDDEN);
 				data->selected = -1;
+				data->title_pos = 0;
 				return;
 		}
 	}

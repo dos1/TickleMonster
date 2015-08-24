@@ -12,5 +12,6 @@ ENDMACRO()
 
 GAMESTATE("dosowisko")
 GAMESTATE("menu")
+GAMESTATE("level")
 
 GAMESTATE("loading")
