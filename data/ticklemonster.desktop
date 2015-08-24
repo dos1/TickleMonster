@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Tickle Monster
+Exec=ticklemonster
+Comment=Who's got tickles?
+Icon=radioedit
+Terminal=false
+Categories=Game;ArcadeGame;
