@@ -34,7 +34,7 @@ int Gamestate_ProgressCount = 6;
 void AnimateBadguys(struct Game *game, struct LevelResources *data, int i) {
 	struct Kid *tmp = data->kids[i];
 	while (tmp) {
-		AnimateCharacter(game, tmp->character, tmp->melting ? 1 : tmp->speed * data->kidSpeed);
+		AnimateCharacter(game, tmp->character, tmp->tickled ? 1 : tmp->speed * data->kidSpeed);
 		tmp=tmp->next;
 	}
 }
@@ -43,7 +43,7 @@ void MoveBadguys(struct Game *game, struct LevelResources *data, int i, float dx
 	struct Kid *tmp = data->kids[i];
 	while (tmp) {
 
-		if (!tmp->character->spritesheet->kill) {
+		if ((!tmp->character->spritesheet->kill) && (!tmp->tickled)) {
 			MoveCharacter(game, tmp->character, dx * tmp->speed * data->kidSpeed, 0, 0);
 		}
 
@@ -70,7 +70,7 @@ void MoveBadguys(struct Game *game, struct LevelResources *data, int i, float dx
 }
 
 void CheckForEnd(struct Game *game, struct LevelResources *data) {
-	return false;
+	return;
 
 	int i;
 	bool lost = false;
@@ -138,7 +138,9 @@ void AddBadguy(struct Game *game, struct LevelResources* data, int i) {
 	n->next = NULL;
 	n->prev = NULL;
 	n->speed = (rand() % 3) * 0.25 + 1;
-	n->melting = false;
+	n->tickled = false;
+	n->grownup = false;
+	n->fun = 0;
 	n->character = CreateCharacter(game, "kid");
 	n->character->spritesheets = data->kid->spritesheets;
 	n->character->shared = true;
@@ -159,35 +161,58 @@ void AddBadguy(struct Game *game, struct LevelResources* data, int i) {
 
 void Fire(struct Game *game, struct LevelResources *data) {
 
+	if (data->movedown || data->moveup) return;
+
 	if (data->tickling) {
+
+		if (data->haskid) {
+			data->tickledKid->tickled = false;
+			SelectSpritesheet(game, data->tickledKid->character, "walk");
+			data->haskid = false;
+			al_set_sample_instance_playing(data->laughter, false);
+			MoveCharacter(game, data->tickledKid->character, 0, 1, 0);
+			data->tickledKid = NULL;
+		}
+
 		SelectSpritesheet(game, data->monster, "stand");
 		MoveCharacter(game, data->monster, 2, -2, 0);
 		data->tickling = false;
 		return;
 	}
 
-	SelectSpritesheet(game, data->monster, "tickle");
+	SelectSpritesheet(game, data->monster, "ticklefail");
 	MoveCharacter(game, data->monster, -2, 2, 0);
 
 	data->tickling = true;
 
-	PrintConsole(game, "playing chord");
-
-	struct Kid *tmp = data->kids[data->marky];
-	while (tmp) {
-		if (!tmp->melting) {
-			if ((data->markx >= tmp->character->x - 9) && (data->markx <= tmp->character->x + 1)) {
-				data->score += 100 * tmp->speed;
-				SelectSpritesheet(game, tmp->character, "melt");
-				data->soloready++;
-				tmp->melting = true;
-			}
-		}
-		tmp=tmp->next;
-	}
+	PrintConsole(game, "MONSTAH %f", data->monster->x);
 }
 
 void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
+
+	if (strcmp(data->monster->spritesheet->name, "fail") == 0) {
+		data->tickling = false;
+		MoveCharacter(game, data->monster, 2, -2, 0);
+		SelectSpritesheet(game, data->monster, "stand");
+	}
+
+	if (data->tickling) {
+		if (!data->haskid) {
+			struct Kid *tmp = data->kids[(int)((data->monster->y - 15) / 20)];
+			while (tmp) {
+				if ((tmp->character->x > data->monster->x + 14) && (tmp->character->x < data->monster->x + 20)) {
+					tmp->tickled = true;
+					SelectSpritesheet(game, data->monster, "tickle");
+					SelectSpritesheet(game, tmp->character, "laugh");
+					data->haskid = true;
+					data->tickledKid = tmp;
+					SetCharacterPosition(game, tmp->character, data->monster->x + 19, tmp->character->y - 1, 0);
+					al_set_sample_instance_playing(data->laughter, true);
+				}
+				tmp=tmp->next;
+			}
+		}
+	}
 
 	if (data->keys.lastkey == data->keys.key) {
 		data->keys.delay = data->keys.lastdelay; // workaround for random bugus UP/DOWN events
@@ -220,11 +245,15 @@ void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
 		if ((data->keys.key) && (data->keys.delay < 3)) {
 
 			if (data->keys.key==ALLEGRO_KEY_LEFT) {
-				MoveCharacter(game, data->monster, -1, 0, 0);
+				if (data->monster->x > 42) {
+					MoveCharacter(game, data->monster, -1, 0, 0);
+				}
 			}
 
 			if (data->keys.key==ALLEGRO_KEY_RIGHT) {
-				MoveCharacter(game, data->monster, 1, 0, 0);
+				if (data->monster->x < 256) {
+					MoveCharacter(game, data->monster, 1, 0, 0);
+				}
 			}
 
 			if (data->keys.delay == INT_MIN) data->keys.delay = 4;
@@ -310,6 +339,8 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	data->monster = CreateCharacter(game, "monster");
 	RegisterSpritesheet(game, data->monster, "stand");
 	RegisterSpritesheet(game, data->monster, "tickle");
+	RegisterSpritesheet(game, data->monster, "ticklefail");
+	RegisterSpritesheet(game, data->monster, "fail");
 	RegisterSpritesheet(game, data->monster, "jump");
 	LoadSpritesheets(game, data->monster);
 	(*progress)(game);
@@ -397,12 +428,16 @@ void StartGame(struct Game *game, struct LevelResources *data) {
 
 void Gamestate_Start(struct Game *game, struct LevelResources* data) {
 	data->cloud_position = 100;
-	SetCharacterPosition(game, data->monster, 180, 107, 0);
+	SetCharacterPosition(game, data->monster, 150, 73, 0);
 	SetCharacterPosition(game, data->suit, 65, 88, 0);
 
 	data->score = 0;
 
 	data->tickling = false;
+	data->haskid = false;
+
+	data->movedown = false;
+	data->moveup = false;
 
 	data->markx = 119;
 	data->marky = 2;
@@ -449,24 +484,30 @@ void Gamestate_ProcessEvent(struct Game *game, struct LevelResources* data, ALLE
 			switch (ev->keyboard.keycode) {
 				case ALLEGRO_KEY_LEFT:
 				case ALLEGRO_KEY_RIGHT:
-					if (data->keys.key != ev->keyboard.keycode) {
-						data->keys.key = ev->keyboard.keycode;
-						data->keys.delay = INT_MIN;
+					if (!data->tickling) {
+						if (data->keys.key != ev->keyboard.keycode) {
+							data->keys.key = ev->keyboard.keycode;
+							data->keys.delay = INT_MIN;
+						}
 					}
 					break;
 				case ALLEGRO_KEY_UP:
-					if (!data->moveup && !data->movedown) {
-						SelectSpritesheet(game, data->monster, "jump");
+					if (!data->tickling) {
+						if (!data->moveup && !data->movedown) {
+							SelectSpritesheet(game, data->monster, "jump");
+						}
+						data->moveup = true;
+						data->movedown = false;
 					}
-					data->moveup = true;
-					data->movedown = false;
 					break;
 				case ALLEGRO_KEY_DOWN:
-					if (!data->moveup && !data->movedown) {
-						SelectSpritesheet(game, data->monster, "jump");
+					if (!data->tickling) {
+						if (!data->moveup && !data->movedown) {
+							SelectSpritesheet(game, data->monster, "jump");
+						}
+						data->moveup = false;
+						data->movedown = true;
 					}
-					data->moveup = false;
-					data->movedown = true;
 					break;
 				case ALLEGRO_KEY_SPACE:
 					Fire(game, data);

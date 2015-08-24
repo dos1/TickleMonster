@@ -38,14 +38,16 @@ struct LevelResources {
 		int soloready, soloanim, soloflash;
 		bool soloactive;
 
-		bool tickling, moveup, movedown;
+		bool tickling, moveup, movedown, haskid;
 
 		struct Kid {
 				struct Character *character;
 				struct Kid *next, *prev;
 				float speed;
-				bool melting;
-		} *kids[6], *destroyQueue;
+				bool tickled;
+				bool grownup;
+				int fun;
+		} *kids[6], *destroyQueue, *tickledKid;
 
 		int timeTillNextBadguy, kidRate;
 
