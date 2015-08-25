@@ -32,6 +32,18 @@
 
 int Gamestate_ProgressCount = 8;
 
+void SaveScore(struct Game *game, struct LevelResources *data) {
+
+	if (((data->score / (double)data->time) > (data->savedScore / (double)data->savedTime)) || ((data->score / (double)data->time) == (data->savedScore / (double)data->savedTime) && (data->score > data->savedScore))) {
+		char *text = malloc(255*sizeof(char));
+		snprintf(text, 255, "%d", data->score);
+		SetConfigOption(game, "TickleMonster", "score", text);
+		snprintf(text, 255, "%d", data->time);
+		SetConfigOption(game, "TickleMonster", "time", text);
+	}
+
+}
+
 void AnimateBadguys(struct Game *game, struct LevelResources *data, int i) {
 	struct Kid *tmp = data->kids[i];
 	while (tmp) {
@@ -85,6 +97,7 @@ void MoveBadguys(struct Game *game, struct LevelResources *data, int i, float dx
 				data->lost = true;
 				al_stop_sample_instance(data->laughter);
 				al_stop_timer(data->timer);
+				SaveScore(game, data);
 			}
 		}
 
@@ -169,7 +182,11 @@ void Gamestate_Draw(struct Game *game, struct LevelResources* data) {
 	DrawCharacter(game, data->monster, al_map_rgb(255,255,255), 0);
 
 	al_draw_bitmap(data->buildings,0, 0,0);
-	al_draw_bitmap(data->hid,0, 0,0);
+	if (data->savedScore) {
+		al_draw_bitmap(data->hid2,0, 0,0);
+	} else {
+		al_draw_bitmap(data->hid,0, 0,0);
+	}
 
 	if (data->tickling && data->haskid) {
 		al_draw_bitmap(data->meter,0, 0,0);
@@ -186,7 +203,10 @@ void Gamestate_Draw(struct Game *game, struct LevelResources* data) {
 	DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 21, 162, 0, text);
 	snprintf(text, 255, "%d", data->time);
 	DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 61, 162, 0, text);
-	//DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 106, 162, 0, "10");
+	if (data->savedScore) {
+		snprintf(text, 255, "%d / %d", data->savedScore, data->savedTime);
+		DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 106, 162, 0, text);
+	}
 	free(text);
 
 	if (data->lost) {
@@ -277,6 +297,7 @@ void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
 						data->lost = true;
 						al_stop_sample_instance(data->laughter);
 						al_stop_timer(data->timer);
+						SaveScore(game, data);
 					} else {
 						tmp->tickled = true;
 						SelectSpritesheet(game, data->monster, "tickle");
@@ -403,6 +424,7 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	data->bg = al_load_bitmap( GetDataFilePath(game, "bg2.png") );
 	data->buildings = al_load_bitmap( GetDataFilePath(game, "buildings.png") );
 	data->hid = al_load_bitmap( GetDataFilePath(game, "hid.png") );
+	data->hid2 = al_load_bitmap( GetDataFilePath(game, "hid2.png") );
 	data->meter = al_load_bitmap( GetDataFilePath(game, "meter.png") );
 	data->busted = al_load_bitmap( GetDataFilePath(game, "busted.png") );
 	data->click_sample = al_load_sample( GetDataFilePath(game, "point.flac") );
@@ -480,6 +502,7 @@ void Gamestate_Unload(struct Game *game, struct LevelResources* data) {
 	al_destroy_bitmap(data->bg);
 	al_destroy_bitmap(data->buildings);
 	al_destroy_bitmap(data->hid);
+	al_destroy_bitmap(data->hid2);
 	al_destroy_bitmap(data->meter);
 	al_destroy_bitmap(data->busted);
 	al_destroy_font(data->font_title);
@@ -571,6 +594,12 @@ void Gamestate_Start(struct Game *game, struct LevelResources* data) {
 
 	data->kidRate = 100;
 	data->timeTillNextBadguy = 0;
+
+	char *end = "";
+
+	data->savedScore = strtol(GetConfigOptionDefault(game, "TickleMonster", "score", "0"), &end, 10);
+	data->savedTime = strtol(GetConfigOptionDefault(game, "TickleMonster", "time", "-1"), &end, 10);
+
 }
 
 void Gamestate_ProcessEvent(struct Game *game, struct LevelResources* data, ALLEGRO_EVENT *ev) {
