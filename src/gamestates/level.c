@@ -151,7 +151,6 @@ void Gamestate_Draw(struct Game *game, struct LevelResources* data) {
 
 	//DrawCharacter(game, data->suit, al_map_rgb(255,255,255), 0);
 
-	DrawCharacter(game, data->monster, al_map_rgb(255,255,255), 0);
 
 	DrawBadguys(game, data, 0);
 	DrawBadguys(game, data, 1);
@@ -159,6 +158,8 @@ void Gamestate_Draw(struct Game *game, struct LevelResources* data) {
 	DrawBadguys(game, data, 3);
 	DrawBadguys(game, data, 4);
 	DrawBadguys(game, data, 5);
+
+	DrawCharacter(game, data->monster, al_map_rgb(255,255,255), 0);
 
 	al_draw_bitmap(data->buildings,0, 0,0);
 	al_draw_bitmap(data->hid,0, 0,0);
@@ -232,7 +233,7 @@ void Fire(struct Game *game, struct LevelResources *data) {
 			SelectSpritesheet(game, data->tickledKid->character, "walk");
 			data->haskid = false;
 			al_set_sample_instance_playing(data->laughter, false);
-			MoveCharacter(game, data->tickledKid->character, 0, 1, 0);
+			MoveCharacter(game, data->tickledKid->character, 0, 3, 0);
 			data->tickledKid = NULL;
 		}
 
@@ -247,7 +248,7 @@ void Fire(struct Game *game, struct LevelResources *data) {
 
 	data->tickling = true;
 
-	PrintConsole(game, "MONSTAH %f", data->monster->x);
+	//PrintConsole(game, "MONSTAH %f", data->monster->x);
 }
 
 void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
@@ -264,13 +265,13 @@ void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
 		if (!data->haskid) {
 			struct Kid *tmp = data->kids[(int)((data->monster->y - 15) / 20)];
 			while (tmp) {
-				if ((tmp->character->x > data->monster->x + 14) && (tmp->character->x < data->monster->x + 20)) {
+				if ((tmp->character->x > data->monster->x + 16) && (tmp->character->x < data->monster->x + 23)) {
 					tmp->tickled = true;
 					SelectSpritesheet(game, data->monster, "tickle");
 					SelectSpritesheet(game, tmp->character, "laugh");
 					data->haskid = true;
 					data->tickledKid = tmp;
-					SetCharacterPosition(game, tmp->character, data->monster->x + 19, tmp->character->y - 1, 0);
+					SetCharacterPosition(game, tmp->character, data->monster->x + 22, tmp->character->y - 3, 0);
 					al_set_sample_instance_playing(data->laughter, true);
 					break;
 				}
