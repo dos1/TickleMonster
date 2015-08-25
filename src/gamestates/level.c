@@ -171,17 +171,12 @@ void Gamestate_Draw(struct Game *game, struct LevelResources* data) {
 
 	al_draw_bitmap(data->bg,0, 0,0);
 
-	//DrawCharacter(game, data->suit, al_map_rgb(255,255,255), 0);
-
-
-	DrawBadguys(game, data, 0);
-	DrawBadguys(game, data, 1);
-	DrawBadguys(game, data, 2);
-	DrawBadguys(game, data, 3);
-	DrawBadguys(game, data, 4);
-	DrawBadguys(game, data, 5);
-
-	DrawCharacter(game, data->monster, al_map_rgb(255,255,255), 0);
+	for (int i=0; i<6; i++) {
+		DrawBadguys(game, data, i);
+		if ((int)((data->monster->y + 18) / 20) > i) {
+			DrawCharacter(game, data->monster, al_map_rgb(255,255,255), 0);
+		}
+	}
 
 	al_draw_bitmap(data->buildings,0, 0,0);
 	if (data->savedScore) {
