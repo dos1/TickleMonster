@@ -73,7 +73,7 @@ void MoveBadguys(struct Game *game, struct LevelResources *data, int i, float dx
 						tmp->grownup = true;
 						tmp->right = true;
 						tmp->character->spritesheets = data->suit->spritesheets;
-						SelectSpritesheet(game, tmp->character, "stand");
+						SelectSpritesheet(game, tmp->character, "walk");
 						MoveCharacter(game, tmp->character, 0, -8, 0);
 					}
 				}
@@ -347,8 +347,6 @@ void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
 	data->cloud_position-=0.1;
 	if (data->cloud_position<-40) { data->cloud_position=100; PrintConsole(game, "cloud_position"); }
 	AnimateCharacter(game, data->monster, 1);
-	AnimateCharacter(game, data->suit, 1);
-
 
 		if ((data->keys.key) && (data->keys.delay < 3)) {
 
@@ -463,7 +461,7 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	(*progress)(game);
 
 	data->suit = CreateCharacter(game, "suit");
-	RegisterSpritesheet(game, data->suit, "stand");
+	RegisterSpritesheet(game, data->suit, "walk");
 	LoadSpritesheets(game, data->suit);
 	(*progress)(game);
 
@@ -545,7 +543,6 @@ void StartGame(struct Game *game, struct LevelResources *data) {
 	TM_CleanQueue(data->timeline);
 	TM_CleanBackgroundQueue(data->timeline);
 	ChangeSpritesheet(game, data->monster, "stand");
-	ChangeSpritesheet(game, data->suit, "stand");
  }
 
 void Gamestate_Start(struct Game *game, struct LevelResources* data) {
@@ -585,7 +582,6 @@ void Gamestate_Start(struct Game *game, struct LevelResources* data) {
 	data->usage = 0;
 
 	SelectSpritesheet(game, data->monster, "stand");
-	SelectSpritesheet(game, data->suit, "stand");
 	//TM_AddQueuedBackgroundAction(data->timeline, &Anim_FixGuitar, TM_AddToArgs(NULL, 1, data), 15*1000, "fix_guitar");
 	//TM_AddQueuedBackgroundAction(data->timeline, &Anim_CowLook, TM_AddToArgs(NULL, 1, data), 5*1000, "cow_look");
 
