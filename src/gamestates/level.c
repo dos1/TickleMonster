@@ -36,11 +36,11 @@ int Gamestate_ProgressCount = 8;
 
 void SaveScore(struct Game *game, struct LevelResources *data) {
 
-	if (((data->score / (double)data->time) > (data->savedScore / (double)data->savedTime)) || ((data->score / (double)data->time) == (data->savedScore / (double)data->savedTime) && (data->score > data->savedScore))) {
+	if (((data->score / (double)(data->time / 10)) > (data->savedScore / (double)data->savedTime)) || ((data->score / (double)(data->time / 10)) == (data->savedScore / (double)data->savedTime) && (data->score > data->savedScore))) {
 		char *text = malloc(255*sizeof(char));
 		snprintf(text, 255, "%d", data->score);
 		SetConfigOption(game, "TickleMonster", "score", text);
-		snprintf(text, 255, "%d", data->time);
+		snprintf(text, 255, "%d", data->time / 10);
 		SetConfigOption(game, "TickleMonster", "time", text);
 	}
 
@@ -201,7 +201,7 @@ void Gamestate_Draw(struct Game *game, struct LevelResources* data) {
 	char *text = malloc(255*sizeof(char));
 	snprintf(text, 255, "%d", data->score);
 	DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 21, 162, 0, text);
-	snprintf(text, 255, "%d", data->time);
+	snprintf(text, 255, "%d", data->time / 10);
 	DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 61, 162, 0, text);
 	if (data->savedScore) {
 		snprintf(text, 255, "%d / %d", data->savedScore, data->savedTime);
@@ -216,9 +216,16 @@ void Gamestate_Draw(struct Game *game, struct LevelResources* data) {
 		char *text = malloc(255*sizeof(char));
 		snprintf(text, 255, "Score: %d", data->score);
 		DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 200, 118, 0, text);
-		snprintf(text, 255, "Time: %d", data->time);
+		snprintf(text, 255, "Time: %d", data->time / 10);
 		DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 200, 128, 0, text);
 		free(text);
+	}
+
+	if (data->paused) {
+		al_draw_filled_rectangle(0, 0, 320, 180, al_map_rgba(0,0,0,128));
+		DrawTextWithShadow(data->font, al_map_rgb(255,255,255), game->viewport.width*0.5, game->viewport.height*0.5 - 25, ALLEGRO_ALIGN_CENTRE, "Game paused!");
+		DrawTextWithShadow(data->font, al_map_rgb(255,255,255), game->viewport.width*0.5, game->viewport.height*0.5 + 5, ALLEGRO_ALIGN_CENTRE, "SPACE to resume");
+		DrawTextWithShadow(data->font, al_map_rgb(255,255,255), game->viewport.width*0.5, game->viewport.height*0.5 + 15, ALLEGRO_ALIGN_CENTRE, "ESCAPE to leave");
 	}
 }
 
@@ -280,7 +287,7 @@ void Fire(struct Game *game, struct LevelResources *data) {
 
 void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
 
-	if (data->lost) return;
+	if ((data->lost) || (data->paused)) return;
 
 	if (strcmp(data->monster->spritesheet->name, "fail") == 0) {
 		data->tickling = false;
@@ -415,7 +422,7 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 
 	struct LevelResources *data = malloc(sizeof(struct LevelResources));
 
-	data->timer = al_create_timer(1);
+	data->timer = al_create_timer(0.1);
 	al_register_event_source(game->_priv.event_queue, al_get_timer_event_source(data->timer));
 
 	data->timeline = TM_Init(game, "main");
@@ -611,7 +618,11 @@ void Gamestate_ProcessEvent(struct Game *game, struct LevelResources* data, ALLE
 
  if (ev->type == ALLEGRO_EVENT_KEY_DOWN) {
 	 if (ev->keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
-		 SwitchGamestate(game, "level", "menu");
+		 if ((data->paused) || (data->lost)) {
+			 SwitchGamestate(game, "level", "menu");
+		 }
+		 al_stop_timer(data->timer);
+		 data->paused = true;
 		 return;
 	 }
 	 if (data->lost && ev->keyboard.keycode == ALLEGRO_KEY_ENTER) {
@@ -652,7 +663,12 @@ void Gamestate_ProcessEvent(struct Game *game, struct LevelResources* data, ALLE
 					}
 					break;
 				case ALLEGRO_KEY_SPACE:
-					Fire(game, data);
+					if (data->paused) {
+						al_start_timer(data->timer);
+						data->paused = false;
+					} else {
+						Fire(game, data);
+					}
 					break;
 				case ALLEGRO_KEY_LSHIFT:
 				case ALLEGRO_KEY_RSHIFT:
@@ -682,9 +698,11 @@ void Gamestate_ProcessEvent(struct Game *game, struct LevelResources* data, ALLE
 }
 
 void Gamestate_Pause(struct Game *game, struct LevelResources* data) {
+	data->paused = true;
 	TM_Pause(data->timeline);
 }
 void Gamestate_Resume(struct Game *game, struct LevelResources* data) {
+	data->paused = false;
 	TM_Resume(data->timeline);
 }
 void Gamestate_Reload(struct Game *game, struct LevelResources* data) {}

@@ -44,7 +44,7 @@ struct LevelResources {
 		int soloready, soloanim, soloflash;
 		bool soloactive;
 
-		bool tickling, moveup, movedown, haskid, lost;
+		bool tickling, moveup, movedown, haskid, lost, paused;
 
 		struct Kid {
 				struct Character *character;
