@@ -558,6 +558,7 @@ void Gamestate_Start(struct Game *game, struct LevelResources* data) {
 
 	data->score = 0;
 	data->time = 0;
+	data->paused = false;
 
 	data->lost = false;
 	data->tickling = false;
