@@ -65,11 +65,18 @@ void MoveBadguys(struct Game *game, struct LevelResources *data, int i, float dx
 				}
 			}
 		} else {
+			// grownup
 			MoveCharacter(game, tmp->character, (tmp->right ? -1 : 1) * dx * tmp->speed * data->kidSpeed / 2, 0, 0);
 			if (tmp->character->x > 270) {
 				tmp->right = false;
 			} else if (tmp->character->x < 42) {
-				tmp->right = true;
+				if (rand() % 2) { // 50% chance for getting rid
+					tmp->right = true;
+				} else {
+					if (!tmp->right) {
+						tmp->happy = true;
+					}
+				}
 			}
 		}
 
@@ -350,7 +357,7 @@ void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
 
 		data->timeTillNextBadguy--;
 		if (data->timeTillNextBadguy <= 0) {
-			data->timeTillNextBadguy = data->kidRate;
+			data->timeTillNextBadguy = data->kidRate * 2;
 			data->kidRate -= data->kidRate * 0.005;
 			if (data->kidRate < 50) {
 				data->kidRate = 50;
