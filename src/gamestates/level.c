@@ -273,13 +273,19 @@ void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
 			struct Kid *tmp = data->kids[(int)((data->monster->y - 15) / 20)];
 			while (tmp) {
 				if ((tmp->character->x > data->monster->x + 16) && (tmp->character->x < data->monster->x + 23)) {
-					tmp->tickled = true;
-					SelectSpritesheet(game, data->monster, "tickle");
-					SelectSpritesheet(game, tmp->character, "laugh");
-					data->haskid = true;
-					data->tickledKid = tmp;
-					SetCharacterPosition(game, tmp->character, data->monster->x + 22, tmp->character->y - 3, 0);
-					al_set_sample_instance_playing(data->laughter, true);
+					if (tmp->grownup) {
+						data->lost = true;
+						al_stop_sample_instance(data->laughter);
+						al_stop_timer(data->timer);
+					} else {
+						tmp->tickled = true;
+						SelectSpritesheet(game, data->monster, "tickle");
+						SelectSpritesheet(game, tmp->character, "laugh");
+						data->haskid = true;
+						data->tickledKid = tmp;
+						SetCharacterPosition(game, tmp->character, data->monster->x + 22, tmp->character->y - 3, 0);
+						al_set_sample_instance_playing(data->laughter, true);
+					}
 					break;
 				}
 				tmp=tmp->next;

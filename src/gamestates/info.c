@@ -51,7 +51,7 @@ void Gamestate_Draw(struct Game *game, struct LevelResources* data) {
 
 	DrawTextWithShadow(data->font, al_map_rgb(255,255,255), game->viewport.width*0.5, 19, ALLEGRO_ALIGN_CENTRE, "You're the TICKLE MONSTER!");
 	DrawTextWithShadow(data->font, al_map_rgb(255,255,255), game->viewport.width*0.5, 29, ALLEGRO_ALIGN_CENTRE, "You tickle kids to ensure they ");
-	DrawTextWithShadow(data->font, al_map_rgb(255,255,255), game->viewport.width*0.5, 39, ALLEGRO_ALIGN_CENTRE, "raise with proper amounts of fun!");
+	DrawTextWithShadow(data->font, al_map_rgb(255,255,255), game->viewport.width*0.5, 39, ALLEGRO_ALIGN_CENTRE, "are raised with proper amounts of fun!");
 	DrawTextWithShadow(data->font, al_map_rgb(255,255,255), game->viewport.width*0.5, 54, ALLEGRO_ALIGN_CENTRE, "Use ARROWS to move and SPACE to tickle!");
 
 	DrawTextWithShadow(data->font, al_map_rgb(255,255,255), game->viewport.width*0.5, 104, ALLEGRO_ALIGN_CENTRE, "Beware - if you give them wrong amount");
