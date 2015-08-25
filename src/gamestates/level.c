@@ -30,7 +30,7 @@
 #define TILE_SIZE 20
 #define MAX_FUN 250.0
 
-int Gamestate_ProgressCount = 6;
+int Gamestate_ProgressCount = 8;
 
 void AnimateBadguys(struct Game *game, struct LevelResources *data, int i) {
 	struct Kid *tmp = data->kids[i];
