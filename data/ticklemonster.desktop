@@ -4,6 +4,6 @@ Version=1.0
 Name=Tickle Monster
 Exec=ticklemonster
 Comment=Who's got tickles?
-Icon=radioedit
+Icon=ticklemonster
 Terminal=false
 Categories=Game;ArcadeGame;
