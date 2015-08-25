@@ -349,15 +349,17 @@ void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
 
 		if ((data->keys.key) && (data->keys.delay < 3)) {
 
-			if (data->keys.key==ALLEGRO_KEY_LEFT) {
-				if (data->monster->x > 42) {
-					MoveCharacter(game, data->monster, -1, 0, 0);
+			if (!data->tickling) {
+				if (data->keys.key==ALLEGRO_KEY_LEFT) {
+					if (data->monster->x > 42) {
+						MoveCharacter(game, data->monster, -1, 0, 0);
+					}
 				}
-			}
 
-			if (data->keys.key==ALLEGRO_KEY_RIGHT) {
-				if (data->monster->x < 256) {
-					MoveCharacter(game, data->monster, 1, 0, 0);
+				if (data->keys.key==ALLEGRO_KEY_RIGHT) {
+					if (data->monster->x < 256) {
+						MoveCharacter(game, data->monster, 1, 0, 0);
+					}
 				}
 			}
 
