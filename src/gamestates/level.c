@@ -28,6 +28,7 @@
 #include "level.h"
 
 #define TILE_SIZE 20
+#define MAX_FUN 250.0
 
 int Gamestate_ProgressCount = 6;
 
@@ -48,15 +49,17 @@ void MoveBadguys(struct Game *game, struct LevelResources *data, int i, float dx
 				MoveCharacter(game, tmp->character, dx * tmp->speed * data->kidSpeed, 0, 0);
 			}
 
-			if (tmp->character->x < 20) {
-				if (tmp->fun > 225 && tmp->fun < 270) {
+			if (tmp->character->x < 30) {
+				if (tmp->fun > 0.68 * MAX_FUN && tmp->fun < 0.88 * MAX_FUN) {
 					tmp->happy = true;
+					al_set_sample_instance_playing(data->click, true);
+					data->score++;
 				} else {
 					tmp->grownup = true;
 					tmp->right = true;
 					tmp->character->spritesheets = data->suit->spritesheets;
 					SelectSpritesheet(game, tmp->character, "stand");
-					MoveCharacter(game, tmp->character, 10, -8, 0);
+					MoveCharacter(game, tmp->character, 0, -8, 0);
 				}
 			}
 		} else {
@@ -136,7 +139,7 @@ void Gamestate_Draw(struct Game *game, struct LevelResources* data) {
 
 	al_draw_bitmap(data->bg,0, 0,0);
 
-	DrawCharacter(game, data->suit, al_map_rgb(255,255,255), 0);
+	//DrawCharacter(game, data->suit, al_map_rgb(255,255,255), 0);
 
 	DrawCharacter(game, data->monster, al_map_rgb(255,255,255), 0);
 
@@ -148,14 +151,25 @@ void Gamestate_Draw(struct Game *game, struct LevelResources* data) {
 	DrawBadguys(game, data, 5);
 
 	al_draw_bitmap(data->buildings,0, 0,0);
+	al_draw_bitmap(data->hid,0, 0,0);
 
 	if (data->tickling && data->haskid) {
-		al_draw_filled_rectangle(0, 160, (data->tickledKid->fun / 300.0) * 320, 180, al_map_rgb(255,255,255));
+		al_draw_bitmap(data->meter,0, 0,0);
+		int length = (data->tickledKid->fun / MAX_FUN) * 151;
+		al_draw_filled_rectangle(160, 163, 160 + ((length > 151) ? 151 : length), 173, al_map_rgb(255,255,255));
 	}
 
 	if (data->soloflash) {
 		al_draw_filled_rectangle(0, 0, 320, 180, al_map_rgb(255,255,255));
 	}
+
+	char *text = malloc(255*sizeof(char));
+	snprintf(text, 255, "%d", data->score);
+	DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 21, 162, 0, text);
+	snprintf(text, 255, "%d", data->time);
+	DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 61, 162, 0, text);
+	//DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 106, 162, 0, "10");
+	free(text);
 }
 
 void AddBadguy(struct Game *game, struct LevelResources* data, int i) {
@@ -347,7 +361,10 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 
 	data->bg = al_load_bitmap( GetDataFilePath(game, "bg2.png") );
 	data->buildings = al_load_bitmap( GetDataFilePath(game, "buildings.png") );
-	data->click_sample = al_load_sample( GetDataFilePath(game, "click.flac") );
+	data->hid = al_load_bitmap( GetDataFilePath(game, "hid.png") );
+	data->meter = al_load_bitmap( GetDataFilePath(game, "meter.png") );
+	data->busted = al_load_bitmap( GetDataFilePath(game, "busted.png") );
+	data->click_sample = al_load_sample( GetDataFilePath(game, "point.flac") );
 	(*progress)(game);
 
 	data->click = al_create_sample_instance(data->click_sample);
@@ -365,7 +382,7 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	(*progress)(game);
 
 	data->font_title = al_load_ttf_font(GetDataFilePath(game, "fonts/MonkeyIsland.ttf"),game->viewport.height*0.16,0 );
-	data->font = al_load_ttf_font(GetDataFilePath(game, "fonts/MonkeyIsland.ttf"),game->viewport.height*0.05,0 );
+	data->font = al_load_ttf_font(GetDataFilePath(game, "fonts/MonkeyIsland.ttf"),12,0 );
 	(*progress)(game);
 
 	data->monster = CreateCharacter(game, "monster");
@@ -415,11 +432,15 @@ void Gamestate_Stop(struct Game *game, struct LevelResources* data) {
 	for (i=0; i<6; i++) {
 		DestroyBadguys(game, data, i);
 	}
+	al_set_sample_instance_playing(data->laughter, false);
 }
 
 void Gamestate_Unload(struct Game *game, struct LevelResources* data) {
 	al_destroy_bitmap(data->bg);
 	al_destroy_bitmap(data->buildings);
+	al_destroy_bitmap(data->hid);
+	al_destroy_bitmap(data->meter);
+	al_destroy_bitmap(data->busted);
 	al_destroy_font(data->font_title);
 	al_destroy_font(data->font);
 	al_destroy_sample_instance(data->laughter);
@@ -464,7 +485,9 @@ void Gamestate_Start(struct Game *game, struct LevelResources* data) {
 	SetCharacterPosition(game, data->suit, 65, 88, 0);
 
 	data->score = 0;
+	data->time = 0;
 
+	data->lost = false;
 	data->tickling = false;
 	data->haskid = false;
 
