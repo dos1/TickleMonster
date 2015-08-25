@@ -29,6 +29,8 @@
 
 #define TILE_SIZE 20
 #define MAX_FUN 250.0
+#define FLOOR_OF_FUN 0.68
+#define CEIL_OF_FUN 0.88
 
 int Gamestate_ProgressCount = 8;
 
@@ -62,7 +64,7 @@ void MoveBadguys(struct Game *game, struct LevelResources *data, int i, float dx
 			}
 
 			if (tmp->character->x < 30) {
-				if (tmp->fun > 0.68 * MAX_FUN && tmp->fun < 0.88 * MAX_FUN) {
+				if (tmp->fun > FLOOR_OF_FUN * MAX_FUN && tmp->fun < CEIL_OF_FUN * MAX_FUN) {
 					tmp->happy = true;
 					al_set_sample_instance_playing(data->click, true);
 					data->score++;
@@ -191,7 +193,8 @@ void Gamestate_Draw(struct Game *game, struct LevelResources* data) {
 	if (data->tickling && data->haskid) {
 		al_draw_bitmap(data->meter,0, 0,0);
 		int length = (data->tickledKid->fun / MAX_FUN) * 151;
-		al_draw_filled_rectangle(160, 163, 160 + ((length > 151) ? 151 : length), 173, al_map_rgb(255,255,255));
+		bool goodFun = ((data->tickledKid->fun / MAX_FUN) > FLOOR_OF_FUN) && ((data->tickledKid->fun / MAX_FUN) < CEIL_OF_FUN);
+		al_draw_filled_rectangle(160, 163, 160 + ((length > 151) ? 151 : length), 173, goodFun ? al_map_rgb(192, 255, 192) : al_map_rgb(255,255,255));
 	}
 
 	if (data->soloflash) {
