@@ -71,6 +71,13 @@ void MoveBadguys(struct Game *game, struct LevelResources *data, int i, float dx
 			}
 		}
 
+		if (tmp->grownup) {
+			if ((tmp->character->x > data->monster->x) && (tmp->character->x + 10 < data->monster->x + 20)) {
+				data->lost = true;
+				al_stop_timer(data->timer);
+			}
+		}
+
 		if (tmp->happy) {
 			if (tmp->prev) {
 				tmp->prev->next = tmp->next;
@@ -170,6 +177,18 @@ void Gamestate_Draw(struct Game *game, struct LevelResources* data) {
 	DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 61, 162, 0, text);
 	//DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 106, 162, 0, "10");
 	free(text);
+
+	if (data->lost) {
+		al_draw_filled_rectangle(0, 0, 320, 180, al_map_rgba(0,0,0,128));
+		al_draw_bitmap(data->busted,0, 0,0);
+
+		char *text = malloc(255*sizeof(char));
+		snprintf(text, 255, "Score: %d", data->score);
+		DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 200, 118, 0, text);
+		snprintf(text, 255, "Time: %d", data->time);
+		DrawTextWithShadow(data->font, al_map_rgb(255,255,255), 200, 128, 0, text);
+		free(text);
+	}
 }
 
 void AddBadguy(struct Game *game, struct LevelResources* data, int i) {
@@ -229,6 +248,8 @@ void Fire(struct Game *game, struct LevelResources *data) {
 }
 
 void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
+
+	if (data->lost) return;
 
 	if (strcmp(data->monster->spritesheet->name, "fail") == 0) {
 		data->tickling = false;
@@ -355,6 +376,9 @@ void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
 void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 
 	struct LevelResources *data = malloc(sizeof(struct LevelResources));
+
+	data->timer = al_create_timer(1);
+	al_register_event_source(game->_priv.event_queue, al_get_timer_event_source(data->timer));
 
 	data->timeline = TM_Init(game, "main");
 	(*progress)(game);
@@ -484,6 +508,8 @@ void Gamestate_Start(struct Game *game, struct LevelResources* data) {
 	SetCharacterPosition(game, data->monster, 150, 73, 0);
 	SetCharacterPosition(game, data->suit, 65, 88, 0);
 
+	al_start_timer(data->timer);
+
 	data->score = 0;
 	data->time = 0;
 
@@ -533,6 +559,23 @@ void Gamestate_Start(struct Game *game, struct LevelResources* data) {
 void Gamestate_ProcessEvent(struct Game *game, struct LevelResources* data, ALLEGRO_EVENT *ev) {
 	TM_HandleEvent(data->timeline, ev);
 
+	if (ev->type == ALLEGRO_EVENT_TIMER) {
+		if (ev->timer.source == data->timer) {
+			data->time++;
+		}
+	}
+
+ if (ev->type == ALLEGRO_EVENT_KEY_DOWN) {
+	 if (ev->keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+		 SwitchGamestate(game, "level", "menu");
+		 return;
+	 }
+	 if (data->lost && ev->keyboard.keycode == ALLEGRO_KEY_ENTER) {
+		 SwitchGamestate(game, "level", "menu");
+		 return;
+	 }
+ }
+	if (data->lost) return;
 
 		if (ev->type == ALLEGRO_EVENT_KEY_DOWN) {
 
@@ -566,9 +609,6 @@ void Gamestate_ProcessEvent(struct Game *game, struct LevelResources* data, ALLE
 					break;
 				case ALLEGRO_KEY_SPACE:
 					Fire(game, data);
-					break;
-				case ALLEGRO_KEY_ESCAPE:
-					SwitchGamestate(game, "level", "menu");
 					break;
 				case ALLEGRO_KEY_LSHIFT:
 				case ALLEGRO_KEY_RSHIFT:

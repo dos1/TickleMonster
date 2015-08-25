@@ -31,6 +31,8 @@ struct LevelResources {
 		ALLEGRO_BITMAP *meter;
 		ALLEGRO_BITMAP *busted;
 
+		ALLEGRO_TIMER *timer;
+
 		float kidSpeed;
 
 		int markx, marky;
