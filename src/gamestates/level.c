@@ -55,11 +55,13 @@ void MoveBadguys(struct Game *game, struct LevelResources *data, int i, float dx
 					al_set_sample_instance_playing(data->click, true);
 					data->score++;
 				} else {
-					tmp->grownup = true;
-					tmp->right = true;
-					tmp->character->spritesheets = data->suit->spritesheets;
-					SelectSpritesheet(game, tmp->character, "stand");
-					MoveCharacter(game, tmp->character, 0, -8, 0);
+					if (rand() % 3 == 0) {
+						tmp->grownup = true;
+						tmp->right = true;
+						tmp->character->spritesheets = data->suit->spritesheets;
+						SelectSpritesheet(game, tmp->character, "stand");
+						MoveCharacter(game, tmp->character, 0, -8, 0);
+					}
 				}
 			}
 		} else {
@@ -72,8 +74,9 @@ void MoveBadguys(struct Game *game, struct LevelResources *data, int i, float dx
 		}
 
 		if (tmp->grownup) {
-			if ((tmp->character->x > data->monster->x) && (tmp->character->x + 10 < data->monster->x + 20)) {
+			if ((tmp->character->x > data->monster->x) && (tmp->character->x + 10 < data->monster->x + 20) && (abs(tmp->character->y - data->monster->y) < 5)) {
 				data->lost = true;
+				al_stop_sample_instance(data->laughter);
 				al_stop_timer(data->timer);
 			}
 		}
@@ -323,8 +326,8 @@ void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
 				}
 			}
 
-			if (data->keys.delay == INT_MIN) data->keys.delay = 4;
-			else data->keys.delay += 4;
+			if (data->keys.delay == INT_MIN) data->keys.delay = 3;
+			else data->keys.delay += 3;
 
 		} else if (data->keys.key) {
 			data->keys.delay-=3;
@@ -347,12 +350,12 @@ void Gamestate_Logic(struct Game *game, struct LevelResources* data) {
 		data->timeTillNextBadguy--;
 		if (data->timeTillNextBadguy <= 0) {
 			data->timeTillNextBadguy = data->kidRate;
-			data->kidRate -= data->kidRate * 0.02;
-			if (data->kidRate < 20) {
-				data->kidRate = 20;
+			data->kidRate -= data->kidRate * 0.005;
+			if (data->kidRate < 50) {
+				data->kidRate = 50;
 			}
 
-			data->kidSpeed+= 0.001;
+			data->kidSpeed+= 0.0005;
 			AddBadguy(game, data, rand() % 6);
 		}
 
@@ -535,7 +538,7 @@ void Gamestate_Start(struct Game *game, struct LevelResources* data) {
 
 	data->lightanim=0;
 
-	data->kidSpeed = 1.2;
+	data->kidSpeed = 0.8;
 
 	data->usage = 0;
 
